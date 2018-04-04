@@ -31,3 +31,12 @@ func TestGetDatabase(t *testing.T) {
 		t.Errorf("Failed")
 	}
 }
+
+func TestCreateDatabase(t *testing.T) {
+	client := getDocClient()
+
+	_, err := client.CreateDatabase("db1")
+	if err != nil {
+		t.Errorf("Failed, %s", err)
+	}
+}

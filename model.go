@@ -2,16 +2,16 @@ package gocdb
 
 type Resource struct {
 	Id         string `json:"id"`
-	ResourceId string `json:"_rid"`
-	SelfLink   string `json:"_self"`
-	ETag       string `json:"_etag"`
-	Timestamp  int    `json:"_ts"`
+	ResourceId string `json:"_rid,omitempty"`
+	SelfLink   string `json:"_self,omitempty"`
+	ETag       string `json:"_etag,omitempty"`
+	Timestamp  int    `json:"_ts,omitempty"`
 }
 
 type Database struct {
 	Resource
-	CollectionsLink string `json:"_coll"`
-	UsersLink       string `json:"_users"`
+	CollectionsLink string `json:"_coll,omitempty"`
+	UsersLink       string `json:"_users,omitempty"`
 }
 
 type PartitionKey struct {
