@@ -5,7 +5,7 @@ type Resource struct {
 	ResourceId string `json:"_rid"`
 	SelfLink   string `json:"_self"`
 	ETag       string `json:"_etag"`
-	Timestamp  string `json:"_ts"`
+	Timestamp  int    `json:"_ts"`
 }
 
 type Database struct {
