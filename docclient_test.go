@@ -25,11 +25,6 @@ func TestGetDatabase(t *testing.T) {
 	if db.Id != "db" {
 		t.Errorf("Failed")
 	}
-
-	db, err = client.GetDatabase("db1")
-	if db != nil {
-		t.Errorf("Failed")
-	}
 }
 
 func TestCreateDatabase(t *testing.T) {
@@ -60,5 +55,18 @@ func TestCreateDatabaseIfNotExist(t *testing.T) {
 
 	if db.Id != "db1" {
 		t.Errorf("Failed, %s", db.SelfLink)
+	}
+}
+
+func TestListDatabases(t *testing.T) {
+	client := getDocClient()
+
+	dbs, err := client.ListDatabases()
+	if err != nil {
+		t.Errorf("Failed. %v", err)
+	}
+
+	if dbs.Count <= 0 {
+		t.Errorf("Failed. %d", dbs.Count)
 	}
 }

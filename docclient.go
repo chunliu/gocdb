@@ -15,17 +15,17 @@ type DocClient struct {
 }
 
 type dbError struct {
-	database *Database
-	err      error
+	data interface{}
+	err  error
 }
 
-func sendDbRequest(req *http.Request) *dbError {
+func sendDbRequest(req *http.Request, v interface{}) *dbError {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return &dbError{
-			database: nil,
-			err:      err,
+			data: nil,
+			err:  err,
 		}
 	}
 
@@ -43,18 +43,16 @@ func sendDbRequest(req *http.Request) *dbError {
 		}
 	}
 
-	db := &Database{}
-
-	if err := json.NewDecoder(resp.Body).Decode(db); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
 		return &dbError{
-			database: nil,
-			err:      err,
+			data: nil,
+			err:  err,
 		}
 	}
 
 	return &dbError{
-		database: db,
-		err:      nil,
+		data: v,
+		err:  nil,
 	}
 }
 
@@ -72,13 +70,14 @@ func (c *DocClient) GetDatabase(dbID string) (*Database, error) {
 		req, err := createRequest(verb, url, utcDate, authSig, nil)
 		if err != nil {
 			result <- &dbError{
-				database: nil,
-				err:      fmt.Errorf("GetDatabase: Failed to create request. Error: %v", err),
+				data: nil,
+				err:  fmt.Errorf("GetDatabase: Failed to create request. Error: %v", err),
 			}
 			return
 		}
 
-		dbe := sendDbRequest(req)
+		db := &Database{}
+		dbe := sendDbRequest(req, db)
 		if dbe.err != nil {
 			dbe.err = fmt.Errorf("GetDatabase: %v", dbe.err)
 		}
@@ -86,7 +85,11 @@ func (c *DocClient) GetDatabase(dbID string) (*Database, error) {
 	}()
 
 	r := <-result
-	return r.database, r.err
+	if r.data == nil {
+		return nil, r.err
+	}
+
+	return r.data.(*Database), r.err
 }
 
 // CreateDatabase create a database with the Id
@@ -108,13 +111,13 @@ func (c *DocClient) CreateDatabase(dbID string) (*Database, error) {
 		req, err := createRequest(verb, url, utcDate, authSig, bytes.NewBuffer(jv))
 		if err != nil {
 			result <- &dbError{
-				database: nil,
-				err:      fmt.Errorf("CreateDatabase: Failed to create request. Error: %v", err),
+				data: nil,
+				err:  fmt.Errorf("CreateDatabase: Failed to create request. Error: %v", err),
 			}
 			return
 		}
 
-		dbe := sendDbRequest(req)
+		dbe := sendDbRequest(req, db)
 		if dbe.err != nil {
 			dbe.err = fmt.Errorf("CreateDatabase: %v", dbe.err)
 		}
@@ -122,7 +125,11 @@ func (c *DocClient) CreateDatabase(dbID string) (*Database, error) {
 	}()
 
 	r := <-result
-	return r.database, r.err
+	if r.data == nil {
+		return nil, r.err
+	}
+
+	return r.data.(*Database), r.err
 }
 
 // CreateDatabaseIfNotExist retrieve the database if it exists. Otherwise, it creates a database with the Id
@@ -143,4 +150,38 @@ func (c *DocClient) CreateDatabaseIfNotExist(dbID string) (*Database, error) {
 	}
 
 	return db, nil
+}
+
+// ListDatabases retrieve all databases from the remote
+func (c *DocClient) ListDatabases() (*Databases, error) {
+	result := make(chan *dbError)
+	go func() {
+		verb := "GET"
+		url := fmt.Sprintf("%s/dbs", c.Endpoint)
+		utcDate := utcNow()
+		authSig := generateAuthSig(verb, "dbs", "", utcDate, c.AuthKey, "master", "1.0")
+
+		req, err := createRequest(verb, url, utcDate, authSig, nil)
+		if err != nil {
+			result <- &dbError{
+				data: nil,
+				err:  fmt.Errorf("ListDatabases: Failed to create request. Error: %v", err),
+			}
+			return
+		}
+
+		dbs := &Databases{}
+		dbe := sendDbRequest(req, dbs)
+		if dbe.err != nil {
+			dbe.err = fmt.Errorf("ListDatabases: %v", dbe.err)
+		}
+		result <- dbe
+	}()
+
+	r := <-result
+	if r.data == nil {
+		return nil, r.err
+	}
+
+	return r.data.(*Databases), r.err
 }

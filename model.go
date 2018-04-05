@@ -14,6 +14,12 @@ type Database struct {
 	UsersLink       string `json:"_users,omitempty"`
 }
 
+type Databases struct {
+	ResourceId string `json:"_rid,omitempty"`
+	Databases  []Database
+	Count      int `json:"_count,omitempty"`
+}
+
 type PartitionKey struct {
 	Paths []string `json:"paths"`
 }
