@@ -36,7 +36,29 @@ func TestCreateDatabase(t *testing.T) {
 	client := getDocClient()
 
 	_, err := client.CreateDatabase("db1")
+	if err != nil && err.Error() != "CreateDatabase: HTTP Status: 409" {
+		t.Errorf("Failed, %s", err)
+	}
+}
+
+func TestCreateDatabaseIfNotExist(t *testing.T) {
+	client := getDocClient()
+
+	db, err := client.CreateDatabaseIfNotExist("db")
 	if err != nil {
 		t.Errorf("Failed, %s", err)
+	}
+
+	if db.Id != "db" {
+		t.Errorf("Failed, %s", db.SelfLink)
+	}
+
+	db, err = client.CreateDatabaseIfNotExist("db1")
+	if err != nil {
+		t.Errorf("Failed, %s", err)
+	}
+
+	if db.Id != "db1" {
+		t.Errorf("Failed, %s", db.SelfLink)
 	}
 }
