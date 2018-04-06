@@ -18,11 +18,15 @@ func utcNow() string {
 }
 
 // Generate authorization signature for Cosmos DB
-func generateAuthSig(verb, resourceType, resourceID, utcDate, key, keyType, version string) string {
-	decodedKey, _ := base64.StdEncoding.DecodeString(key)
+func generateAuthSig(verb, resourceType, resourceID, utcDate, key, keyType, version string) (string, error) {
+	// Decode the key from Base64
+	decodedKey, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		return "", err
+	}
 	hmacSha256 := hmac.New(sha256.New, decodedKey)
-	//utcDate := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT") // RFC 7231: HTTP-date
 
+	// ResourceID is case sensitive
 	payload := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n",
 		strings.ToLower(verb),
 		strings.ToLower(resourceType),
@@ -31,18 +35,29 @@ func generateAuthSig(verb, resourceType, resourceID, utcDate, key, keyType, vers
 		"",
 	)
 
-	hmacSha256.Write([]byte(payload))
+	_, err = hmacSha256.Write([]byte(payload))
+	if err != nil {
+		return "", err
+	}
+
 	hashPayload := hmacSha256.Sum(nil)
 	signature := base64.StdEncoding.EncodeToString(hashPayload)
 
 	v := fmt.Sprintf("type=%s&ver=%s&sig=%s", keyType, version, signature)
 
 	// Signature need to be in URL encoding
-	return url.QueryEscape(v)
+	return url.QueryEscape(v), nil
 }
 
-func createRequest(verb, url, utcDate, authSig string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(verb, url, body)
+func createRequest(verb, url, rt, ri, key string, body io.Reader) (*http.Request, error) {
+	utcDate := utcNow()
+	authSig, err := generateAuthSig(verb, rt, ri, utcDate, key, "master", "1.0")
+	if err != nil {
+		return nil, err
+	}
+
+	var req *http.Request
+	req, err = http.NewRequest(verb, url, body)
 	if err != nil {
 		return nil, err
 	}

@@ -65,10 +65,8 @@ func (c *DocClient) GetDatabase(dbID string) (*Database, error) {
 		verb := "GET"
 		ri := fmt.Sprintf("dbs/%s", dbID)
 		url := fmt.Sprintf("%s/dbs/%s", c.Endpoint, dbID)
-		utcDate := utcNow()
-		authSig := generateAuthSig(verb, "dbs", ri, utcDate, c.AuthKey, "master", "1.0")
 
-		req, err := createRequest(verb, url, utcDate, authSig, nil)
+		req, err := createRequest(verb, url, "dbs", ri, c.AuthKey, nil)
 		if err != nil {
 			result <- &dbError{
 				data: nil,
@@ -100,16 +98,13 @@ func (c *DocClient) CreateDatabase(dbID string) (*Database, error) {
 	go func() {
 		verb := "POST"
 		url := fmt.Sprintf("%s/dbs", c.Endpoint)
-		utcDate := utcNow()
-		// ResourceId is empty in this post request
-		authSig := generateAuthSig(verb, "dbs", "", utcDate, c.AuthKey, "master", "1.0")
 
 		db := &Database{}
 		db.Id = dbID
 
 		jv, _ := json.Marshal(db)
 
-		req, err := createRequest(verb, url, utcDate, authSig, bytes.NewBuffer(jv))
+		req, err := createRequest(verb, url, "dbs", "", c.AuthKey, bytes.NewBuffer(jv))
 		if err != nil {
 			result <- &dbError{
 				data: nil,
@@ -159,10 +154,8 @@ func (c *DocClient) ListDatabases() (*Databases, error) {
 	go func() {
 		verb := "GET"
 		url := fmt.Sprintf("%s/dbs", c.Endpoint)
-		utcDate := utcNow()
-		authSig := generateAuthSig(verb, "dbs", "", utcDate, c.AuthKey, "master", "1.0")
 
-		req, err := createRequest(verb, url, utcDate, authSig, nil)
+		req, err := createRequest(verb, url, "dbs", "", c.AuthKey, nil)
 		if err != nil {
 			result <- &dbError{
 				data: nil,
@@ -195,10 +188,8 @@ func (c *DocClient) DeleteDatabase(dbID string) error {
 		verb := "DELETE"
 		ri := fmt.Sprintf("dbs/%s", dbID)
 		url := fmt.Sprintf("%s/dbs/%s", c.Endpoint, dbID)
-		utcDate := utcNow()
-		authSig := generateAuthSig(verb, "dbs", ri, utcDate, c.AuthKey, "master", "1.0")
 
-		req, err := createRequest(verb, url, utcDate, authSig, nil)
+		req, err := createRequest(verb, url, "dbs", ri, c.AuthKey, nil)
 		if err != nil {
 			result <- &dbError{
 				data: nil,
