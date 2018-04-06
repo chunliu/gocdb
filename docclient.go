@@ -32,7 +32,8 @@ func sendDbRequest(req *http.Request, v interface{}) *dbError {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound {
+		if resp.StatusCode == http.StatusNotFound ||
+			resp.StatusCode == http.StatusNoContent {
 			return &dbError{nil, nil}
 		}
 		if resp.StatusCode != http.StatusCreated {
@@ -184,4 +185,37 @@ func (c *DocClient) ListDatabases() (*Databases, error) {
 	}
 
 	return r.data.(*Databases), r.err
+}
+
+// DeleteDatabase delete the database from remote
+func (c *DocClient) DeleteDatabase(dbID string) error {
+	result := make(chan *dbError)
+
+	go func() {
+		verb := "DELETE"
+		ri := fmt.Sprintf("dbs/%s", dbID)
+		url := fmt.Sprintf("%s/dbs/%s", c.Endpoint, dbID)
+		utcDate := utcNow()
+		authSig := generateAuthSig(verb, "dbs", ri, utcDate, c.AuthKey, "master", "1.0")
+
+		req, err := createRequest(verb, url, utcDate, authSig, nil)
+		if err != nil {
+			result <- &dbError{
+				data: nil,
+				err:  fmt.Errorf("DeleteDatabase: Failed to create request. Error: %v", err),
+			}
+			return
+		}
+
+		db := &Database{}
+		dbe := sendDbRequest(req, db)
+		if dbe.err != nil {
+			dbe.err = fmt.Errorf("DeleteDatabase: %v", dbe.err)
+		}
+		result <- dbe
+	}()
+
+	r := <-result
+
+	return r.err
 }

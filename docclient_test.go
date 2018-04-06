@@ -70,3 +70,12 @@ func TestListDatabases(t *testing.T) {
 		t.Errorf("Failed. %d", dbs.Count)
 	}
 }
+
+func TestDeleteDatabase(t *testing.T) {
+	client := getDocClient()
+
+	err := client.DeleteDatabase("db1")
+	if err != nil {
+		t.Errorf("Failed. %v", err)
+	}
+}
