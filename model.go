@@ -22,12 +22,42 @@ type Databases struct {
 
 type PartitionKey struct {
 	Paths []string `json:"paths"`
+	Kind  string   `json:"kind"`
+}
+
+type Index struct {
+	Kind      string `json:"kind"`
+	DataType  string `json:"dataType"`
+	Precision int16  `json:"precision"`
+}
+
+type IncludedPath struct {
+	Path    string `json:"path"`
+	Indexes []Index
+}
+
+type ExcludedPath struct {
+	Path string `json:"path"`
+}
+
+type IndexingPolicy struct {
+	Automatic     bool
+	IndexMode     string
+	IncludedPaths []IncludedPath
+	ExcludedPaths []ExcludedPath
 }
 
 type Collection struct {
 	Resource
-	DefaultTimeToLive    int    `json:"defaultTtl"`
-	DocumentsLink        string `json:"_docs"`
-	PartitionKey         `json:"partitionKey"`
-	StoredProceduresLink string `json:"_sprocs"`
+	PartitionKey         `json:"omitempty"`
+	IndexingPolicy       `json:"omitempty"`
+	DefaultTimeToLive    int    `json:"defaultTtl,omitempty"`
+	DocumentsLink        string `json:"_docs,omitempty"`
+	StoredProceduresLink string `json:"_sprocs,omitempty"`
+	ConflictsLink        string `json:"_conflicts,omitempty"`
+}
+
+type RequestOptions struct {
+	OfferThroughput string
+	OfferType       string
 }
