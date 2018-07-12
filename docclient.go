@@ -101,12 +101,7 @@ func (c *DocClient) CreateDatabaseIfNotExist(dbID string) (*Database, error) {
 	}
 
 	// Not found
-	db, err = c.CreateDatabase(dbID)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+	return c.CreateDatabase(dbID)
 }
 
 // ListDatabases retrieve all databases from the remote

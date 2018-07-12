@@ -46,3 +46,79 @@ func (c *DocClient) CreateDocumentCollection(dbID string, coll *Collection, opti
 
 	return r.data.(*Collection), nil
 }
+
+func (c *DocClient) GetDocumentCollection(dbID, collID string) (*Collection, error) {
+	result := make(chan *cdbError)
+
+	go func() {
+		verb := "GET"
+		ri := fmt.Sprintf("dbs/%s/colls/%s", dbID, collID)
+		url := fmt.Sprintf("%s/%s", c.Endpoint, ri)
+
+		req, err := createRequest(verb, url, "colls", ri, c.AuthKey, nil)
+		if err != nil {
+			result <- &cdbError{
+				data: nil,
+				err:  fmt.Errorf("GetDocumentCollection: Failed to create request. Error: %v", err),
+			}
+			return
+		}
+
+		coll := &Collection{}
+		dbe := sendCdbRequest(req, coll)
+		if dbe.err != nil {
+			dbe.err = fmt.Errorf("GetDocumentCollection: %v", dbe.err)
+		}
+		result <- dbe
+	}()
+
+	r := <-result
+	if r.data == nil {
+		return nil, r.err
+	}
+
+	return r.data.(*Collection), nil
+}
+
+func (c *DocClient) CreateDocumentCollectionIfNotExist(dbID string, coll *Collection, options RequestOptions) (*Collection, error) {
+	collection, err := c.GetDocumentCollection(dbID, coll.Id)
+
+	if err != nil {
+		return nil, err
+	}
+	if collection != nil {
+		return collection, nil
+	}
+
+	return c.CreateDocumentCollection(dbID, coll, options)
+}
+
+func (c *DocClient) DeleteDocumentCollection(dbID, collID string) error {
+	result := make(chan *cdbError)
+
+	go func() {
+		verb := "DELETE"
+		ri := fmt.Sprintf("dbs/%s/colls/%s", dbID, collID)
+		url := fmt.Sprintf("%s/%s", c.Endpoint, ri)
+
+		req, err := createRequest(verb, url, "colls", ri, c.AuthKey, nil)
+		if err != nil {
+			result <- &cdbError{
+				data: nil,
+				err:  fmt.Errorf("DeleteDocumentCollection: Failed to create request. Error: %v", err),
+			}
+			return
+		}
+
+		coll := &Collection{}
+		dbe := sendCdbRequest(req, coll)
+		if dbe.err != nil {
+			dbe.err = fmt.Errorf("DeleteDocumentCollection: %v", dbe.err)
+		}
+		result <- dbe
+	}()
+
+	r := <-result
+
+	return r.err
+}
