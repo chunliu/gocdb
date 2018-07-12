@@ -58,6 +58,6 @@ type Collection struct {
 }
 
 type RequestOptions struct {
-	OfferThroughput string
+	OfferThroughput int
 	OfferType       string
 }

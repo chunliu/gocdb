@@ -10,7 +10,7 @@ func TestCreateDocumentCollection(t *testing.T) {
 	collection.Id = "Collection1"
 
 	var err error
-	collection, err = client.CreateDocumentCollection("db", collection)
+	collection, err = client.CreateDocumentCollection("db", collection, RequestOptions{})
 	if err != nil {
 		t.Errorf("Failed: %v", err)
 	}

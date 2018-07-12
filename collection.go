@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
-func (c *DocClient) CreateDocumentCollection(dbID string, coll *Collection, options ...RequestOptions) (*Collection, error) {
+func (c *DocClient) CreateDocumentCollection(dbID string, coll *Collection, options RequestOptions) (*Collection, error) {
 	result := make(chan *cdbError)
 
 	go func() {
@@ -22,6 +23,13 @@ func (c *DocClient) CreateDocumentCollection(dbID string, coll *Collection, opti
 				err:  fmt.Errorf("CreateDocumentCollection: Failed to create request. Error: %v", err),
 			}
 			return
+		}
+
+		if options.OfferThroughput > 0 {
+			req.Header.Add("x-ms-offer-throughput", strconv.Itoa(options.OfferThroughput))
+		}
+		if len(options.OfferType) > 0 {
+			req.Header.Add("x-ms-offer-type", options.OfferType)
 		}
 
 		dbe := sendCdbRequest(req, coll)

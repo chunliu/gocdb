@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 )
 
@@ -17,44 +16,6 @@ type DocClient struct {
 type cdbError struct {
 	data interface{}
 	err  error
-}
-
-func sendCdbRequest(req *http.Request, v interface{}) *cdbError {
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return &cdbError{
-			data: nil,
-			err:  err,
-		}
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound ||
-			resp.StatusCode == http.StatusNoContent {
-			return &cdbError{nil, nil}
-		}
-		if resp.StatusCode != http.StatusCreated {
-			return &cdbError{
-				nil,
-				fmt.Errorf("HTTP Status: %v", resp.StatusCode),
-			}
-		}
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
-		return &cdbError{
-			data: nil,
-			err:  err,
-		}
-	}
-
-	return &cdbError{
-		data: v,
-		err:  nil,
-	}
 }
 
 // GetDatabase restrieves the database info based on the database Id

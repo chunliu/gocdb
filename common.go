@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -69,4 +70,42 @@ func createRequest(verb, url, rt, ri, key string, body io.Reader) (*http.Request
 	req.Header.Set("User-Agent", "gocdb/1.0")
 
 	return req, nil
+}
+
+func sendCdbRequest(req *http.Request, v interface{}) *cdbError {
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return &cdbError{
+			data: nil,
+			err:  err,
+		}
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound ||
+			resp.StatusCode == http.StatusNoContent {
+			return &cdbError{nil, nil}
+		}
+		if resp.StatusCode != http.StatusCreated {
+			return &cdbError{
+				nil,
+				fmt.Errorf("HTTP Status: %s", resp.Status),
+			}
+		}
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
+		return &cdbError{
+			data: nil,
+			err:  err,
+		}
+	}
+
+	return &cdbError{
+		data: v,
+		err:  nil,
+	}
 }
