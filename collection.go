@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func (c *DocClient) CreateDocumentCollection(dbID string, coll *Collection, options RequestOptions) (*Collection, error) {
+func (c *DocumentClient) CreateDocumentCollection(dbID string, coll *Collection, options RequestOptions) (*Collection, error) {
 	result := make(chan *cdbError)
 
 	go func() {
@@ -47,7 +47,7 @@ func (c *DocClient) CreateDocumentCollection(dbID string, coll *Collection, opti
 	return r.data.(*Collection), nil
 }
 
-func (c *DocClient) GetDocumentCollection(dbID, collID string) (*Collection, error) {
+func (c *DocumentClient) GetDocumentCollection(dbID, collID string) (*Collection, error) {
 	result := make(chan *cdbError)
 
 	go func() {
@@ -80,7 +80,7 @@ func (c *DocClient) GetDocumentCollection(dbID, collID string) (*Collection, err
 	return r.data.(*Collection), nil
 }
 
-func (c *DocClient) CreateDocumentCollectionIfNotExist(dbID string, coll *Collection, options RequestOptions) (*Collection, error) {
+func (c *DocumentClient) CreateDocumentCollectionIfNotExist(dbID string, coll *Collection, options RequestOptions) (*Collection, error) {
 	collection, err := c.GetDocumentCollection(dbID, coll.Id)
 
 	if err != nil {
@@ -93,7 +93,7 @@ func (c *DocClient) CreateDocumentCollectionIfNotExist(dbID string, coll *Collec
 	return c.CreateDocumentCollection(dbID, coll, options)
 }
 
-func (c *DocClient) DeleteDocumentCollection(dbID, collID string) error {
+func (c *DocumentClient) DeleteDocumentCollection(dbID, collID string) error {
 	result := make(chan *cdbError)
 
 	go func() {
@@ -121,4 +121,37 @@ func (c *DocClient) DeleteDocumentCollection(dbID, collID string) error {
 	r := <-result
 
 	return r.err
+}
+
+func (c *DocumentClient) ReplaceDocumentCollection(dbID string, coll *Collection) (*Collection, error) {
+	result := make(chan *cdbError)
+
+	go func() {
+		verb := "PUT"
+		ri := fmt.Sprintf("dbs/%s/colls/%s", dbID, coll.Id)
+		url := fmt.Sprintf("%s/%s", c.Endpoint, ri)
+		cv, _ := json.Marshal(coll)
+
+		req, err := createRequest(verb, url, "colls", ri, c.AuthKey, bytes.NewBuffer(cv))
+		if err != nil {
+			result <- &cdbError{
+				data: nil,
+				err:  fmt.Errorf("ReplaceDocumentCollection: Failed to create request. Error: %v", err),
+			}
+			return
+		}
+
+		dbe := sendCdbRequest(req, coll)
+		if dbe.err != nil {
+			dbe.err = fmt.Errorf("ReplaceDocumentCollection: %v", dbe.err)
+		}
+		result <- dbe
+	}()
+
+	r := <-result
+	if r.data == nil {
+		return nil, r.err
+	}
+
+	return r.data.(*Collection), nil
 }

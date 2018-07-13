@@ -7,8 +7,8 @@ import (
 	"net/url"
 )
 
-// DocClient represents the client to the Cosmos DB
-type DocClient struct {
+// DocumentClient represents the client to the Cosmos DB
+type DocumentClient struct {
 	Endpoint *url.URL
 	AuthKey  string
 }
@@ -19,7 +19,7 @@ type cdbError struct {
 }
 
 // GetDatabase restrieves the database info based on the database Id
-func (c *DocClient) GetDatabase(dbID string) (*Database, error) {
+func (c *DocumentClient) GetDatabase(dbID string) (*Database, error) {
 	result := make(chan *cdbError)
 
 	go func() {
@@ -53,7 +53,7 @@ func (c *DocClient) GetDatabase(dbID string) (*Database, error) {
 }
 
 // CreateDatabase create a database with the Id
-func (c *DocClient) CreateDatabase(dbID string) (*Database, error) {
+func (c *DocumentClient) CreateDatabase(dbID string) (*Database, error) {
 	result := make(chan *cdbError)
 
 	go func() {
@@ -90,7 +90,7 @@ func (c *DocClient) CreateDatabase(dbID string) (*Database, error) {
 }
 
 // CreateDatabaseIfNotExist retrieve the database if it exists. Otherwise, it creates a database with the Id
-func (c *DocClient) CreateDatabaseIfNotExist(dbID string) (*Database, error) {
+func (c *DocumentClient) CreateDatabaseIfNotExist(dbID string) (*Database, error) {
 	db, err := c.GetDatabase(dbID)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (c *DocClient) CreateDatabaseIfNotExist(dbID string) (*Database, error) {
 }
 
 // ListDatabases retrieve all databases from the remote
-func (c *DocClient) ListDatabases() (*Databases, error) {
+func (c *DocumentClient) ListDatabases() (*Databases, error) {
 	result := make(chan *cdbError)
 	go func() {
 		verb := "GET"
@@ -137,7 +137,7 @@ func (c *DocClient) ListDatabases() (*Databases, error) {
 }
 
 // DeleteDatabase delete the database from remote
-func (c *DocClient) DeleteDatabase(dbID string) error {
+func (c *DocumentClient) DeleteDatabase(dbID string) error {
 	result := make(chan *cdbError)
 
 	go func() {
