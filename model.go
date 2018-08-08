@@ -57,7 +57,14 @@ type Collection struct {
 	ConflictsLink        string `json:"_conflicts,omitempty"`
 }
 
+type DocumentBase struct {
+	Resource
+	Attachments string `json:"_attachments,omitempty"`
+}
+
 type RequestOptions struct {
-	OfferThroughput int
-	OfferType       string
+	OfferThroughput   int
+	OfferType         string
+	IsUpsert          bool
+	IndexingDirective string
 }
